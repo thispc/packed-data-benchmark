@@ -25,13 +25,12 @@ try:
 except ImportError:
     turbojpeg = None
 
-if turbojpeg:
-    try:
-        turbojpeg_path = "/opt/TurboVNC/java/libturbojpeg.so"
-        # Test
-        turbojpeg_decoder = turbojpeg.TurboJPEG(turbojpeg_path)
-    except OSError:
-        print("turboJPEG was installed but not found. Continuing without")
+try:
+    turbojpeg_path = "/opt/TurboVNC/java/libturbojpeg.so"
+    turbojpeg_decoder = turbojpeg.TurboJPEG(turbojpeg_path)
+except Exception:
+    print("turboJPEG was installed but not found or failed to load. Continuing without")
+    turbojpeg_decoder = None
 
 # Deep Learning
 import numpy as np
@@ -72,30 +71,44 @@ class ImageDataset(torch.utils.data.Dataset):
         img_path_example = os.path.join(
             self.img_dir, self.prefix + str(index).zfill(self.zfill_len)
         )
-        img_path = list(glob.glob(img_path_example + "*"))
-        assert len(img_path) == 1
-        self.file_ext = os.path.splitext(img_path[0])[1]
+        if cache:
+            img_path = list(Path(path).glob("*.zip"))
+            assert len(img_path) == 1
+            self.file_ext = os.path.splitext(img_path[0])[1]
+        else:
+            self.file_ext = ".jpg"  # or ".png" depending on your files
 
         # Read all labels and store them in the class instance
         self.read_label_file()
         if cache:
             self.cache_images()
 
-    def read_label_file(self):
-        """
-        Read label function
-        Assumes a single label file containing the ground-truth labels for all samples in txt or csv
-        """
-        label_file = list(self.img_dir.glob("*.csv")) + list(self.img_dir.glob("*.txt"))
-        assert len(label_file) == 1
-        label_file = label_file[0]
+    import os
+    import glob
 
-        with open(label_file, "r") as csvfile:
-            reader = csv.reader(
-                csvfile, delimiter=" ", quotechar="|", quoting=csv.QUOTE_MINIMAL
-            )
-            for row in reader:
-                self.labels.append(int(row[0]))
+    def read_label_file(self):
+        # Find all images
+        img_files = sorted([
+            f for f in os.listdir(self.img_dir)
+            if f.lower().endswith(('.jpg', '.jpeg', '.png'))
+        ])
+        # For each image, look for a matching .txt label
+        self.samples = []
+        missing_labels = 0
+        for img in img_files:
+            label_file = os.path.splitext(img)[0] + ".txt"
+            label_path = os.path.join(self.img_dir, label_file)
+            img_path = os.path.join(self.img_dir, img)
+            if os.path.isfile(label_path):
+                self.samples.append((img_path, label_path))
+            else:
+                missing_labels += 1
+                # If you want to ignore missing labels, just continue.
+                # Or print warning if needed.
+        if not self.samples:
+            raise RuntimeError(f"No image/label pairs found in {self.img_dir}")
+        if missing_labels > 0:
+            print(f"Warning: {missing_labels} images have no label file.")
 
     def read_image(self, img_path):
         """
@@ -106,10 +119,10 @@ class ImageDataset(torch.utils.data.Dataset):
         jpgs = (".jpg", ".jpeg")
         if self.file_ext == ".png" and pyspng and not self.encoder_info:
             image = pyspng.load(fname.read())
-        elif self.file_ext.lower() in jpgs and turbojpeg:
+        elif self.file_ext.lower() in jpgs and turbojpeg and turbojpeg_decoder:
             try:
                 image = turbojpeg_decoder.decode(fname.read(), pixel_format=0)
-            except IOError:  # Catch jpgs which are actually encoded as PNG
+            except Exception:
                 image = PIL.Image.open(fname).convert("RGB")
         else:
             image = PIL.Image.open(img_path).convert("RGB")
@@ -126,23 +139,20 @@ class ImageDataset(torch.utils.data.Dataset):
             self.cached_images.append(image)
 
     def __getitem__(self, index):
-        label = self.labels[index]
-        if self.cache:
-            image = self.cached_images[index]
-            if self.transform:
-                image = self.transform(image)
-            else:
-                image = to_tensor(image)
+        img_path, label_path = self.samples[index]
 
-            return image, label
-
-        index += self.offset_index
-        img_path = os.path.join(
-            self.img_dir, self.prefix + str(index).zfill(self.zfill_len) + self.file_ext
-        )
-
+        # Load image
         image = self.read_image(img_path)
 
+        # Load label(s)
+        with open(label_path) as f:
+            # If label is a single value
+            label = f.read().strip()
+            # Optionally parse to int/float if needed
+            # label = int(label) or label = float(label)
+            # If YOLO format with multiple columns, you may want:
+            # label = [float(x) for x in label.split()]
+        
         if self.transform:
             image = self.transform(image)
         else:
@@ -150,8 +160,9 @@ class ImageDataset(torch.utils.data.Dataset):
 
         return image, label
 
+
     def __len__(self):
-        return len(self.labels)
+        return len(self.samples)
 
 
 # TODO:

@@ -110,14 +110,12 @@ def benchmark_petastorm(
             # Only calls this once but does shuffle and continues len(dataset) * num_epochs
             timer_per_epoch = time.time()
             for i, batch in enumerate(train_loader):
-                images, labels = map(
-                    lambda tensor: tensor.to(device, non_blocking=pin_memory),
-                    (batch["image"], batch["label"]),
-                )
-                # if (i % len_dataset) == 0 and warm_start:
-                if i == len_dataset:
-                    start = time.time()
-                    print(f"Epoch {0} finished in {time.time() - timer_per_epoch}")
+                images = batch["image"]
+                labels = batch["label"]
+                if isinstance(images, torch.Tensor):
+                    images = images.to(device, non_blocking=pin_memory)
+                if isinstance(labels, torch.Tensor):
+                    labels = labels.to(device, non_blocking=pin_memory)
 
             end = time.time()
             results["time"].append(end - start)
@@ -180,7 +178,7 @@ def benchmark_gpu(
             persistent_workers=num_worker > 0 and persistent_workers,
             pin_memory=pin_memory,
         )
-
+        start = time.time()
         if not warm_start:
             start = time.time()
 
@@ -189,10 +187,10 @@ def benchmark_gpu(
                 start = time.time()
             timer_per_epoch = time.time()
             for i, (images, labels) in enumerate(dataloader):
-                images, labels = map(
-                    lambda tensor: tensor.to(device, non_blocking=pin_memory),
-                    (images, labels),
-                )
+                if isinstance(images, torch.Tensor):
+                    images = images.to(device, non_blocking=pin_memory)
+                if isinstance(labels, torch.Tensor):
+                    labels = labels.to(device, non_blocking=pin_memory)
 
             print(f"Epoch {epoch} finished in {time.time() - timer_per_epoch}")
         end = time.time()
@@ -249,10 +247,12 @@ def benchmark_gpu_tfrecords(
                 start = time.time()
             timer_per_epoch = time.time()
             for i, batch in enumerate(dataloader):
-                images, labels = map(
-                    lambda tensor: tensor.to(device, non_blocking=pin_memory),
-                    (batch["image"], batch["label"]),
-                )
+                images = batch["image"]
+                labels = batch["label"]
+                if isinstance(images, torch.Tensor):
+                    images = images.to(device, non_blocking=pin_memory)
+                if isinstance(labels, torch.Tensor):
+                    labels = labels.to(device, non_blocking=pin_memory)
 
             print(f"Epoch {epoch} finished in {time.time() - timer_per_epoch}")
         end = time.time()
@@ -313,7 +313,7 @@ def save_results_to_file(results, filename):
 
 
 def prepare_data(data_paths, formats, location="home"):
-    location = "/scratch-nvme/1/"
+    # location = "/scratch-nvme/1/"
     new_data_paths = {}
     for format in formats:
         # Check location
@@ -385,9 +385,12 @@ def run_benchmarks(
     elif dataset_name == "FFHQ":
         orig_dim = 1024
         resize_dim = 256
+    elif dataset_name == "turkey":
+        orig_dim = 640
+        resize_dim = 640
 
     # Add your dataset length
-    lengths = {"CIFAR10": 50000, "ImageNet10k": 10000, "FFHQ": 70000}
+    lengths = {"CIFAR10": 50000, "ImageNet10k": 10000, "FFHQ": 70000, "turkey": len(os.listdir(data_paths["Image"])) // 2}
 
     # TODO: maybe nicer to put the to_tensor() in the else here...
     for format, path in data_paths.items():

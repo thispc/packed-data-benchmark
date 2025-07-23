@@ -185,6 +185,20 @@ def imagenet10k_to_hdf5(
     else:
         generate_hdf5_data(dataset, output_path, num_files=num_files)
 
+def turkey_to_hdf5(num_files=1, save_encoded=False, encoder_info=False):
+    output_path = "../data/turkey/hdf5/"
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+    data_path = "../data/turkey/disk/"
+    dataset = ImageDataset(data_path, encoder_info=encoder_info)
+
+    if save_encoded:
+        generate_hdf5_data_bytes(
+            dataset, output_path, num_files=num_files, encoder_info=encoder_info
+        )
+    else:
+        generate_hdf5_data(dataset, output_path, num_files=num_files)
+
 
 def ffhq_to_hdf5(num_files=1, save_encoded=False, encoder_info=False):
     output_path = "/scratch-shared/{}/ffhq/hdf5".format(os.getenv("USER"))
@@ -225,6 +239,7 @@ if __name__ == "__main__":
     encoder_info = False
     # Flag to resize the samples to a common resolution
     resize = False
+    turkey_to_hdf5(num_files, save_encoded, encoder_info=encoder_info)
     # cifar10_to_hdf5(num_files, save_encoded, encoder_info=encoder_info)
     # imagenet10k_to_hdf5(num_files, save_encoded, encoder_info=encoder_info)
     # ffhq_to_hdf5(num_files, save_encoded, encoder_info)

@@ -48,7 +48,7 @@ pycodestyle==2.10.0
 pyflakes==3.0.1
 pyparsing==3.0.9
 pyspark==3.3.0
-pyspng==0.1.0
+# pyspng==0.1.0
 python-dateutil==2.8.2
 PyTurboJPEG @ git+https://github.com/lilohuang/PyTurboJPEG.git@48e60954d3948df27685ef90105e1653be18d859
 pytz==2022.2.1
@@ -61,13 +61,13 @@ six==1.16.0
 tensorboard==2.9.1
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
-tensorflow==2.9.1
-tensorflow-estimator==2.9.0
-tensorflow-io-gcs-filesystem==0.26.0
+#tensorflow==2.9.1
+#tensorflow-estimator==2.9.0
+#tensorflow-io-gcs-filesystem==0.26.0
 termcolor==1.1.0
-torch==1.12.1+cu116
+torch==1.12.1
 torchtext==0.13.1
-torchvision==0.10.0
+torchvision==0.13.1
 tqdm==4.64.0
 typing-extensions==4.3.0
 urllib3==1.26.11

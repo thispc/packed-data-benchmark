@@ -7,7 +7,7 @@ def parse_args():
     )
 
     # Dataset choice
-    datasets = ["CIFAR10", "ImageNet10k", "FFHQ"]
+    datasets = ["CIFAR10", "ImageNet10k", "FFHQ", "turkey"]
     parser.add_argument(
         "-d", "--dataset", type=str, default="CIFAR10", choices=datasets
     )
