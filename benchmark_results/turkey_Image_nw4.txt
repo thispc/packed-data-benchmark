@@ -1,0 +1,24 @@
+turboJPEG was installed but not found or failed to load. Continuing without
+-- dataset : turkey
+-- format : ['Image']
+-- load_encoded : 0
+-- location : home
+-- cache : 0
+-- warm_start : 1
+-- pin_memory : 0
+-- persistent_workers : 0
+-- epochs : 1
+-- batch_size : 1
+-- num_workers : [4]
+-- transform : 1
+-- shuffle : [1]
+-- device : cpu
+Initializing Image dataset with path:  data//turkey/disk/
+Start experiment (GPU) on Image with: 1 epochs and batch size 1
+turboJPEG was installed but not found or failed to load. Continuing without
+turboJPEG was installed but not found or failed to load. Continuing without
+turboJPEG was installed but not found or failed to load. Continuing without
+turboJPEG was installed but not found or failed to load. Continuing without
+Epoch 0 finished in 29.440744876861572
+Finish with: 29.440793991088867 second, num_workers=4
+Results saved in results/turkey_e1_bs1_c0_ws1_pm0_pw0_t1.txt

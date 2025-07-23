@@ -186,6 +186,20 @@ def ffhq_to_lmdb(num_files, save_encoded=False, encoder_info=False):
         encoder_info=encoder_info,
     )
 
+def turkey_to_lmdb(num_files=1, save_encoded=False, encoder_info=False):
+    output_path = "../data/turkey/lmdb/"
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+    data_path = "../data/turkey/disk/"
+    dataset = ImageDataset(data_path, encoder_info=encoder_info)
+
+    if save_encoded:
+        generate_lmdb_data_bytes(
+            dataset, output_path, num_files=num_files, encoder_info=encoder_info
+        )
+    else:
+        generate_lmdb_data(dataset, output_path, num_files=num_files)
+
 
 if __name__ == "__main__":
     """

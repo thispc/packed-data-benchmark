@@ -6,11 +6,10 @@ from pathlib import Path
 
 import numpy as np
 import PIL.Image
-
+from datasets import ImageDataset
 import torch
 
-from utils_convert import (
-    ImageDataset,
+from convert_data.utils_convert import (
     transform,
     collate_fn,
     collate_fn_encoder_info,
@@ -168,6 +167,15 @@ def ffhq_to_zip(num_files, save_encoded=False, encoder_info=False):
         save_encoded=save_encoded,
         encoder_info=encoder_info,
     )
+def turkey_to_zip(num_files=1, save_encoded=False, encoder_info=False):
+    output_path = "../data/turkey/zip"
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+    data_path = "../data/turkey/disk/"
+    dataset = ImageDataset(data_path, encoder_info=encoder_info)
+    generate_zip_data(
+        dataset, output_path, num_files=num_files, save_encoded=save_encoded
+    )
 
 
 if __name__ == "__main__":
@@ -192,3 +200,4 @@ if __name__ == "__main__":
     # cifar10_to_zip(num_files, save_encoded=save_encoded, encoder_info=encoder_info)
     # imagenet10k_to_zip(num_files, save_encoded=save_encoded, resize=resize, encoder_info=encoder_info)
     # ffhq_to_zip(num_files, save_encoded=save_encoded, encoder_info=encoder_info)
+    # turkey_to_zip(num_files, save_encoded=save_encoded, encoder_info=encoder_info)

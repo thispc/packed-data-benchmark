@@ -1,0 +1,15 @@
+turboJPEG was installed but not found or failed to load. Continuing without
+-- dataset : turkey
+-- format : ['WebDataset']
+-- load_encoded : 0
+-- location : home
+-- cache : 0
+-- warm_start : 1
+-- pin_memory : 0
+-- persistent_workers : 0
+-- epochs : 1
+-- batch_size : 1
+-- num_workers : [2]
+-- transform : 1
+-- shuffle : [1]
+-- device : cpu

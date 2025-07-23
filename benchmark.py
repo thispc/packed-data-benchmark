@@ -128,6 +128,7 @@ def benchmark_petastorm(
 
 
 def benchmark_gpu(
+    len_dataset,
     dataset,
     epochs,
     batch_size,
@@ -195,7 +196,12 @@ def benchmark_gpu(
             print(f"Epoch {epoch} finished in {time.time() - timer_per_epoch}")
         end = time.time()
         results["time"].append(end - start)
-        results["throughput"] = len(dataset) * epochs / np.array(results["time"])
+        try:
+            total = len(dataset)
+        except TypeError:
+            # Add your own logic for WebDataset or fallback
+            total = len_dataset
+        results["throughput"] = total * epochs / np.array(results["time"])
         print("Finish with: {} second, num_workers={}".format(end - start, num_worker))
     return results
 
@@ -363,6 +369,15 @@ def copy_data_to_folder(old_path, new_path):
             shutil.copy2(old_path, new_path_out)
     return new_path_out
 
+import tarfile
+
+def count_webdataset_samples(tar_path):
+    count = 0
+    with tarfile.open(tar_path, "r") as tar:
+        for member in tar.getnames():
+            if member.endswith(".jpg"):  # or .png
+                count += 1
+    return count
 
 def run_benchmarks(
     dataset_name,
@@ -408,6 +423,11 @@ def run_benchmarks(
                 )
             else:
                 dataset = ImageDataset(path, transform=transform_fn_, cache=cache)
+        elif format == "WebDataset":
+            webdataset_tar = path  # Adjust if your path points to the tar file
+            len_dataset = count_webdataset_samples(webdataset_tar)
+            dataset = WebDataset(path, transform=transform_fn_)
+            dataloader_kwargs["shuffle"] = False
         elif format == "ZIP":
             dataset = ZIPDataset(
                 path, cache=cache, transform=transform_fn_, load_encoded=load_encoded
@@ -470,7 +490,7 @@ def run_benchmarks(
             )
         else:
             results_dataset = benchmark_gpu(
-                dataset, epochs, batch_size, num_workers, format, **dataloader_kwargs
+                len_dataset, dataset, epochs, batch_size, num_workers, format, **dataloader_kwargs
             )
 
         results.append(results_dataset)
@@ -505,6 +525,7 @@ def main():
     data_path_tar = f"{prefix}/{dataset_path}/tar/part0.tar"
     data_path_petastorm = f"{prefix}/{dataset_path}/parquet/"
     data_path_tfrecords = f"{prefix}/{dataset_path}/tfrecords/part0.tfrecords"
+    data_path_webdataset = f"{prefix}/{dataset_path}/webdataset/shard0.tar"
     index_path = f"{prefix}/{dataset_path}/tfrecords/data.index"
 
     data_paths = {
@@ -515,6 +536,7 @@ def main():
         "LMDB": data_path_lmdb,
         "Petastorm": data_path_petastorm,
         "TFRecords": [data_path_tfrecords, index_path],
+        "WebDataset": data_path_webdataset,  
     }
 
     dataloader_kwargs = {

@@ -168,6 +168,30 @@ class ImageDataset(torch.utils.data.Dataset):
 # TODO:
 # - Multiple .h5 files of data
 # - (Partially) cached data
+
+import webdataset as wds
+
+class WebDataset(torch.utils.data.IterableDataset):
+    def __init__(self, tar_path, transform=None):
+        self.tar_path = tar_path
+        self.transform = transform
+
+    def __iter__(self):
+        # assumes .tar contains files named like: "0001.jpg" and "0001.cls"
+        dataset = (
+            wds.WebDataset(self.tar_path)
+            .decode("pil")
+            .to_tuple("jpg", "txt")  # or ("png", "cls"), adjust as needed
+        )
+        for img, label in dataset:
+            if not label.strip():
+                print(f"[SKIP] Empty label detected! label: '{label}' (repr: {repr(label)})")
+                continue  # Skip this sample!
+            if self.transform:
+                img = self.transform(img)
+            yield img, int(label.split()[0])
+
+
 class H5Dataset(torch.utils.data.Dataset):
     """Dataset for packed HDF5/H5 files to pass to a PyTorch dataloader
 

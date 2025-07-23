@@ -182,6 +182,42 @@ def ffhq_to_tar(num_files, save_encoded=False, encoder_info=False):
         encoder_info=encoder_info,
     )
 
+import tarfile
+import io
+from pathlib import Path
+from PIL import Image
+
+def turkey_to_tar(num_files=1):
+    output_path = "../data/turkey/tar/"
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+    data_path = "../data/turkey/disk/"
+    from utils_convert import ImageDataset  # Adjust import if needed
+    dataset = ImageDataset(data_path)
+
+    tar_path = Path(output_path) / f"part0.tar"
+    with tarfile.open(tar_path, "w") as tar:
+        for idx, (img, label) in enumerate(dataset):
+            # Save image to memory as JPEG
+            img_buffer = io.BytesIO()
+            if isinstance(img, Image.Image):
+                img.save(img_buffer, format="JPEG")
+            else:
+                Image.fromarray(img).save(img_buffer, format="JPEG")
+            img_bytes = img_buffer.getvalue()
+            img_buffer.close()
+
+            # Save label as txt (string or array)
+            label_bytes = str(label).encode()
+            img_info = tarfile.TarInfo(f"{idx}.jpg")
+            img_info.size = len(img_bytes)
+            tar.addfile(img_info, io.BytesIO(img_bytes))
+
+            label_info = tarfile.TarInfo(f"{idx}.txt")
+            label_info.size = len(label_bytes)
+            tar.addfile(label_info, io.BytesIO(label_bytes))
+    print(f"Saved {idx+1} images/labels to {tar_path}")
+
 
 if __name__ == "__main__":
     """
@@ -205,3 +241,4 @@ if __name__ == "__main__":
     # cifar10_to_tar(num_files, save_encoded)
     # imagenet10k_to_tar(num_files, save_encoded=save_encoded, resize=resize, encoder_info=encoder_info)
     # ffhq_to_tar(num_files, save_encoded=save_encoded, encoder_info=encoder_info)
+    # turkey_to_tar(num_files)

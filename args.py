@@ -13,7 +13,7 @@ def parse_args():
     )
 
     # Choice of image formats
-    formats = ["Image", "HDF5", "LMDB", "Petastorm", "TAR", "TFRecords", "ZIP"]
+    formats = ["Image", "HDF5", "LMDB", "Petastorm", "TAR", "TFRecords", "ZIP", "WebDataset"]
     parser.add_argument("-f", "--format", nargs="+", default=formats, choices=formats)
     parser.add_argument("-le", "--load-encoded", type=int, default=0, choices=[0, 1])
 
